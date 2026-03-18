@@ -6,7 +6,7 @@ import { Plus, Search, Edit2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { formatDate } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 import { toast } from "sonner";
 
 const createSchema = z.object({
