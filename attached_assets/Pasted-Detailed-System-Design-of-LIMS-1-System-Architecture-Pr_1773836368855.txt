@@ -1,0 +1,184 @@
+Detailed System Design of LIMS 1. System Architecture (Professional Level) 📌 Architecture Type
+Use Modular Monolithic → later Microservices
+🔷 Layers: Frontend (Web UI) ↓ API Gateway / Backend ↓ Core Services (Modules) ↓ Database + Storage 🧩 2. Feature → Module Mapping (From Video) Video Feature System Module Sample Tracking Sample Service Inventory Management Inventory Service Workflow Tracking Workflow Engine Barcoding Barcode Service Protocol Execution Lab Execution Engine Instrument Integration Integration Service Storage Management Storage Service Reporting Reporting Engine Customer Portal External Access Module Audit / Compliance Audit Service 🔧 3. Core Modules (Detailed Design) 🧪 1. Sample Tracking Module
+👉 MOST IMPORTANT (Core of LIMS)
+Functions:
+Register sample
+Assign unique ID + barcode
+Track status
+Data Flow: User → Create Sample → System assigns ID → Stored in DB Database: Sample( sample_id PK, barcode, type, status, location, created_at ) 📦 2. Inventory Management Module Features:
+Track chemicals, kits, tools
+Low-stock alerts
+Auto reordering
+Database: Inventory( item_id PK, name, quantity, threshold, expiry_date ) 🔄 3. Workflow Engine (CRITICAL) From video: workflow tracking & protocol execution Example Workflow: Received → Logged → Testing → Review → Approved Design:
+State machine model
+Configurable workflows
+Table: Workflow( workflow_id, sample_id, current_stage, status ) 🧬 4. Protocol Execution Engine Features:
+Step-by-step lab procedures
+Auto data capture
+Validation checks
+Flow: Load Protocol → Execute Steps → Record Results 🔖 5. Barcode System Features:
+Generate barcode for:
+Samples
+Inventory
+Equipment
+Design:
+Use QR / Code128
+Scanner API integration
+🏭 6. Instrument Integration Module From video: analyzer interfaces / instrument management Features:
+Connect lab machines
+Auto-import results
+Architecture: Instrument → Adapter → API → Database 🧊 7. Storage Management Features:
+Track freezer / rack / shelf
+Sample location hierarchy
+Structure: Freezer → Rack → Box → Slot Table: Storage( location_id, parent_location, type, temperature ) 📊 8. Reporting Engine Features:
+Generate reports:
+Test results
+Audit reports
+Export:
+PDF / Excel
+🌐 9. Customer Portal Features:
+Submit samples
+Track results
+Download reports
+Architecture:
+Separate frontend
+Secure API access
+📜 10. Audit & Compliance Module VERY IMPORTANT (for labs) Features:
+Track every action
+Regulatory compliance
+Table: AuditLog( log_id, user_id, action, timestamp, old_value, new_value ) 🗄️ 4. Complete Database Design (Combined) Main Entities:
+Users
+Samples
+Tests
+Inventory
+Workflows
+Reports
+Audit Logs
+Storage Locations
+🔐 5. Security Architecture
+JWT Authentication
+Role-Based Access Control (RBAC)
+Data encryption (HTTPS)
+Audit logs (compliance)
+⚙️ 6. Backend Design Tech Stack:
+Node.js (Express / NestJS)
+OR Java (Spring Boot)
+APIs: POST /samples GET /samples/{id} POST /tests GET /reports 🎨 7. Frontend Design Pages:
+Dashboard
+Sample Entry
+Workflow Monitor
+Inventory Panel
+Reports
+Admin Settings
+Tech:
+React / Angular
+Tailwind CSS
+🔁 8. End-to-End Flow (Real System)
+Customer submits sample (Portal)
+Sample registered + barcode generated
+Stored in location
+Workflow assigned
+Technician performs test
+Instrument uploads data
+Reviewer approves
+Report generated ☁️ 9. Deployment Architecture
+Frontend → CDN
+Backend → Cloud (AWS EC2)
+Database → PostgreSQL (RDS)
+Storage → S3
+⚡ 10. Advanced Enhancements
+AI-based anomaly detection
+Real-time dashboards
+IoT lab device integration
+Mobile app .
+🏗️ 1. System Architecture Diagram (Clean + Explained) 🔷 High-Level Architecture ┌────────────────────┐ │ Web / Mobile UI │ └─────────┬──────────┘ │ ▼ ┌────────────────────┐ │ API Gateway │ └─────────┬──────────┘ │ ┌─────────────────┼─────────────────┐ ▼ ▼ ▼ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ │ Sample │ │ Workflow │ │ Inventory │ │ Service │ │ Engine │ │ Service │ └──────┬───────┘ └──────┬───────┘ └──────┬───────┘ ▼ ▼ ▼ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ │ Barcode │ │ Reporting │ │ Audit │ │ Service │ │ Service │ │ Service │ └──────┬───────┘ └──────┬───────┘ └──────┬───────┘ ▼ ▼ ▼ ┌────────────────────┐ │ Database │ │ (PostgreSQL) │ └────────────────────┘ 🔁 Data Flow (Real Scenario) User → Create Sample → API → Sample Service → DB → Workflow Engine → Assign Steps → Technician Updates → Results Stored → Reporting Service → Generate Report 🧠 Key Design Concepts
+Loose coupling → Each module independent
+Scalable → Add microservices
+Secure → API Gateway handles auth ER Diagram (Entity Relationship Diagram) 🎯 Purpose
+Shows how data is stored and related in LIMS.
+📊 ER Diagram (Text Representation) [User]
+user_id (PK)
+name
+role
+email
+│
+│ performs
+▼
+[Sample]
+sample_id (PK)
+type
+status
+created_at
+user_id (FK)
+│
+│ has
+▼
+[Test]
+test_id (PK)
+sample_id (FK)
+test_name
+result
+status
+│
+│ generates
+▼
+[Report]
+report_id (PK)
+sample_id (FK)
+generated_at
+file_path
+│
+│ stored in
+▼
+[Storage]
+location_id (PK)
+name
+type
+temperature
+│
+│ tracked by
+▼
+[Inventory]
+item_id (PK)
+name
+quantity
+expiry_date
+│
+│ logged in
+▼
+[AuditLog]
+log_id (PK)
+user_id (FK)
+action
+timestamp 🔗 Relationships Explained
+User → Sample (1:N) One user can create many samples
+Sample → Test (1:N) One sample can have multiple tests
+Sample → Report (1:1 or 1:N) One sample generates reports
+User → AuditLog (1:N) Tracks user actions
+🧠 2. UML Diagrams 📌 A. Use Case Diagram 🎯 Shows system functionality from user perspective Actors:
+Admin
+Lab Technician
+Customer
+Use Cases:
+Login
+Register Sample
+Assign Test
+Perform Test
+Upload Results
+Generate Report
+View Report
+Manage Inventory
+Audit Logs 🔷 Diagram Representation [Customer] │ ▼ ┌──────────────┐ │ Submit Sample│ └──────────────┘
+[Technician] ──► Perform Test ──► Upload Results
+[Admin] ──► Manage Users ──► View Audit Logs ──► Generate Reports 📌 B. Class Diagram 🎯 Shows structure of system (OOP design) Class User { user_id name role login() }
+Class Sample { sample_id type status createSample() }
+Class Test { test_id test_name result performTest() }
+Class Report { report_id generateReport() }
+Relationships: User → Sample Sample → Test Sample → Report 📌 C. Sequence Diagram 🎯 Shows step-by-step interaction User → UI → API → Sample Service → Database User ← Confirmation
+Technician → API → Test Service → Database Technician ← Result Saved
+API → Reporting Service → Generate PDF 📌 D. Activity Diagram 🎯 Shows workflow (process flow) Start ↓ Login ↓ Register Sample ↓ Assign Test ↓ Perform Test ↓ Enter Results ↓ Review ↓ Generate Report ↓ End 🎯 Final Understanding ✔ ER Diagram → Data structure ✔ UML Diagrams → System behavior & flow
+Together they give:
+📊 Database design
+🔄 System workflow
+🧠 Object structure

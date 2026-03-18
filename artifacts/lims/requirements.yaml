@@ -1,0 +1,20 @@
+packages:
+  "framer-motion": "For smooth, premium animations and layout transitions"
+  "recharts": "For the dashboard data visualization and statistics"
+  "date-fns": "For formatting timestamps and expiry dates"
+  "react-hook-form": "For robust form state management"
+  "@hookform/resolvers": "For Zod validation integration with forms"
+  "zod": "For strict schema validation on all forms"
+  "clsx": "For conditional class names"
+  "tailwind-merge": "For merging tailwind classes safely"
+  "sonner": "For beautiful toast notifications"
+
+images:
+  - path: "artifacts/lims/public/images/sci-bg.png"
+    description: "Abstract dark medical scientific background, dark deep blue and cyan glowing geometric hexagonal molecules and subtle DNA helix patterns, minimal and premium, very dark, low contrast"
+    aspect_ratio: "16:9"
+
+notes:
+  - Using generated Orval hooks from @workspace/api-client-react
+  - Implementing dark mode scientific UI (deep slate, cyan, glowing elements)
+  - All features (Samples, Tests, Inventory, Workflows, Storage, Reports, Audit, Users) are fully implemented with CRUD via generated hooks

@@ -1,22 +1,38 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: LIMS - Laboratory Information Management System API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: samples
+    description: Sample management
+  - name: tests
+    description: Test management
+  - name: inventory
+    description: Inventory management
+  - name: workflows
+    description: Workflow management
+  - name: storage
+    description: Storage location management
+  - name: reports
+    description: Reporting
+  - name: audit
+    description: Audit logs
+  - name: users
+    description: User management
+  - name: dashboard
+    description: Dashboard statistics
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +40,534 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /users:
+    get:
+      operationId: listUsers
+      tags: [users]
+      summary: List all users
+      responses:
+        "200":
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+    post:
+      operationId: createUser
+      tags: [users]
+      summary: Create a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUser"
+      responses:
+        "201":
+          description: Created user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /users/{id}:
+    get:
+      operationId: getUser
+      tags: [users]
+      summary: Get user by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: User
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /samples:
+    get:
+      operationId: listSamples
+      tags: [samples]
+      summary: List all samples
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: type
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of samples
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Sample"
+    post:
+      operationId: createSample
+      tags: [samples]
+      summary: Register a new sample
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSample"
+      responses:
+        "201":
+          description: Created sample
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Sample"
+
+  /samples/{id}:
+    get:
+      operationId: getSample
+      tags: [samples]
+      summary: Get sample by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Sample
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Sample"
+    patch:
+      operationId: updateSample
+      tags: [samples]
+      summary: Update sample
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSample"
+      responses:
+        "200":
+          description: Updated sample
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Sample"
+
+  /tests:
+    get:
+      operationId: listTests
+      tags: [tests]
+      summary: List all tests
+      parameters:
+        - name: sampleId
+          in: query
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of tests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Test"
+    post:
+      operationId: createTest
+      tags: [tests]
+      summary: Create a new test
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTest"
+      responses:
+        "201":
+          description: Created test
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Test"
+
+  /tests/{id}:
+    get:
+      operationId: getTest
+      tags: [tests]
+      summary: Get test by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Test
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Test"
+    patch:
+      operationId: updateTest
+      tags: [tests]
+      summary: Update test
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTest"
+      responses:
+        "200":
+          description: Updated test
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Test"
+
+  /inventory:
+    get:
+      operationId: listInventory
+      tags: [inventory]
+      summary: List all inventory items
+      parameters:
+        - name: lowStock
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: List of inventory items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/InventoryItem"
+    post:
+      operationId: createInventoryItem
+      tags: [inventory]
+      summary: Create inventory item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateInventoryItem"
+      responses:
+        "201":
+          description: Created inventory item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryItem"
+
+  /inventory/{id}:
+    get:
+      operationId: getInventoryItem
+      tags: [inventory]
+      summary: Get inventory item by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Inventory item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryItem"
+    patch:
+      operationId: updateInventoryItem
+      tags: [inventory]
+      summary: Update inventory item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateInventoryItem"
+      responses:
+        "200":
+          description: Updated inventory item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryItem"
+
+  /workflows:
+    get:
+      operationId: listWorkflows
+      tags: [workflows]
+      summary: List all workflows
+      parameters:
+        - name: sampleId
+          in: query
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of workflows
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Workflow"
+    post:
+      operationId: createWorkflow
+      tags: [workflows]
+      summary: Create a new workflow
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateWorkflow"
+      responses:
+        "201":
+          description: Created workflow
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workflow"
+
+  /workflows/{id}:
+    get:
+      operationId: getWorkflow
+      tags: [workflows]
+      summary: Get workflow by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Workflow
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workflow"
+    patch:
+      operationId: updateWorkflow
+      tags: [workflows]
+      summary: Update workflow stage/status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateWorkflow"
+      responses:
+        "200":
+          description: Updated workflow
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workflow"
+
+  /storage:
+    get:
+      operationId: listStorage
+      tags: [storage]
+      summary: List storage locations
+      parameters:
+        - name: parentId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of storage locations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StorageLocation"
+    post:
+      operationId: createStorage
+      tags: [storage]
+      summary: Create storage location
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateStorage"
+      responses:
+        "201":
+          description: Created storage location
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StorageLocation"
+
+  /storage/{id}:
+    get:
+      operationId: getStorage
+      tags: [storage]
+      summary: Get storage location by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Storage location
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StorageLocation"
+
+  /reports:
+    get:
+      operationId: listReports
+      tags: [reports]
+      summary: List all reports
+      responses:
+        "200":
+          description: List of reports
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Report"
+    post:
+      operationId: createReport
+      tags: [reports]
+      summary: Generate a report
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateReport"
+      responses:
+        "201":
+          description: Created report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Report"
+
+  /reports/{id}:
+    get:
+      operationId: getReport
+      tags: [reports]
+      summary: Get report by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Report"
+
+  /audit-logs:
+    get:
+      operationId: listAuditLogs
+      tags: [audit]
+      summary: List audit logs
+      parameters:
+        - name: userId
+          in: query
+          schema:
+            type: integer
+        - name: action
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of audit logs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AuditLog"
+
+  /dashboard/stats:
+    get:
+      operationId: getDashboardStats
+      tags: [dashboard]
+      summary: Get dashboard statistics
+      responses:
+        "200":
+          description: Dashboard statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +578,509 @@ components:
       required:
         - status
 
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [admin, technician, reviewer, customer]
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - email
+        - role
+        - createdAt
+
+    CreateUser:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [admin, technician, reviewer, customer]
+      required:
+        - name
+        - email
+        - role
+
+    Sample:
+      type: object
+      properties:
+        id:
+          type: integer
+        barcode:
+          type: string
+        type:
+          type: string
+        status:
+          type: string
+          enum: [received, logged, testing, review, approved, rejected]
+        priority:
+          type: string
+          enum: [low, normal, high, urgent]
+        locationId:
+          type: integer
+          nullable: true
+        createdById:
+          type: integer
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - barcode
+        - type
+        - status
+        - priority
+        - createdAt
+        - updatedAt
+
+    CreateSample:
+      type: object
+      properties:
+        type:
+          type: string
+        status:
+          type: string
+          enum: [received, logged, testing, review, approved, rejected]
+        priority:
+          type: string
+          enum: [low, normal, high, urgent]
+        locationId:
+          type: integer
+          nullable: true
+        createdById:
+          type: integer
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+      required:
+        - type
+
+    UpdateSample:
+      type: object
+      properties:
+        type:
+          type: string
+        status:
+          type: string
+          enum: [received, logged, testing, review, approved, rejected]
+        priority:
+          type: string
+          enum: [low, normal, high, urgent]
+        locationId:
+          type: integer
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+
+    Test:
+      type: object
+      properties:
+        id:
+          type: integer
+        sampleId:
+          type: integer
+        testName:
+          type: string
+        result:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [pending, in_progress, completed, failed]
+        performedById:
+          type: integer
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - sampleId
+        - testName
+        - status
+        - createdAt
+        - updatedAt
+
+    CreateTest:
+      type: object
+      properties:
+        sampleId:
+          type: integer
+        testName:
+          type: string
+        performedById:
+          type: integer
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+      required:
+        - sampleId
+        - testName
+
+    UpdateTest:
+      type: object
+      properties:
+        result:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [pending, in_progress, completed, failed]
+        notes:
+          type: string
+          nullable: true
+
+    InventoryItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        category:
+          type: string
+        quantity:
+          type: number
+        unit:
+          type: string
+        threshold:
+          type: number
+        expiryDate:
+          type: string
+          format: date
+          nullable: true
+        supplier:
+          type: string
+          nullable: true
+        location:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - category
+        - quantity
+        - unit
+        - threshold
+        - createdAt
+        - updatedAt
+
+    CreateInventoryItem:
+      type: object
+      properties:
+        name:
+          type: string
+        category:
+          type: string
+        quantity:
+          type: number
+        unit:
+          type: string
+        threshold:
+          type: number
+        expiryDate:
+          type: string
+          format: date
+          nullable: true
+        supplier:
+          type: string
+          nullable: true
+        location:
+          type: string
+          nullable: true
+      required:
+        - name
+        - category
+        - quantity
+        - unit
+        - threshold
+
+    UpdateInventoryItem:
+      type: object
+      properties:
+        name:
+          type: string
+        category:
+          type: string
+        quantity:
+          type: number
+        unit:
+          type: string
+        threshold:
+          type: number
+        expiryDate:
+          type: string
+          format: date
+          nullable: true
+        supplier:
+          type: string
+          nullable: true
+        location:
+          type: string
+          nullable: true
+
+    Workflow:
+      type: object
+      properties:
+        id:
+          type: integer
+        sampleId:
+          type: integer
+        workflowName:
+          type: string
+        currentStage:
+          type: string
+          enum: [received, logged, testing, review, approved, completed]
+        status:
+          type: string
+          enum: [active, paused, completed, cancelled]
+        assignedToId:
+          type: integer
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - sampleId
+        - workflowName
+        - currentStage
+        - status
+        - createdAt
+        - updatedAt
+
+    CreateWorkflow:
+      type: object
+      properties:
+        sampleId:
+          type: integer
+        workflowName:
+          type: string
+        assignedToId:
+          type: integer
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+      required:
+        - sampleId
+        - workflowName
+
+    UpdateWorkflow:
+      type: object
+      properties:
+        currentStage:
+          type: string
+          enum: [received, logged, testing, review, approved, completed]
+        status:
+          type: string
+          enum: [active, paused, completed, cancelled]
+        assignedToId:
+          type: integer
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+
+    StorageLocation:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        type:
+          type: string
+          enum: [freezer, rack, box, slot]
+        parentId:
+          type: integer
+          nullable: true
+        temperature:
+          type: number
+          nullable: true
+        capacity:
+          type: integer
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - type
+        - createdAt
+
+    CreateStorage:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum: [freezer, rack, box, slot]
+        parentId:
+          type: integer
+          nullable: true
+        temperature:
+          type: number
+          nullable: true
+        capacity:
+          type: integer
+          nullable: true
+      required:
+        - name
+        - type
+
+    Report:
+      type: object
+      properties:
+        id:
+          type: integer
+        sampleId:
+          type: integer
+          nullable: true
+        reportType:
+          type: string
+          enum: [test_results, audit, inventory, workflow]
+        title:
+          type: string
+        content:
+          type: string
+          nullable: true
+        generatedById:
+          type: integer
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - reportType
+        - title
+        - createdAt
+
+    CreateReport:
+      type: object
+      properties:
+        sampleId:
+          type: integer
+          nullable: true
+        reportType:
+          type: string
+          enum: [test_results, audit, inventory, workflow]
+        title:
+          type: string
+        content:
+          type: string
+          nullable: true
+        generatedById:
+          type: integer
+          nullable: true
+      required:
+        - reportType
+        - title
+
+    AuditLog:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+          nullable: true
+        action:
+          type: string
+        entityType:
+          type: string
+        entityId:
+          type: integer
+          nullable: true
+        oldValue:
+          type: string
+          nullable: true
+        newValue:
+          type: string
+          nullable: true
+        timestamp:
+          type: string
+          format: date-time
+      required:
+        - id
+        - action
+        - entityType
+        - timestamp
+
+    DashboardStats:
+      type: object
+      properties:
+        totalSamples:
+          type: integer
+        activeSamples:
+          type: integer
+        pendingTests:
+          type: integer
+        completedTests:
+          type: integer
+        lowStockItems:
+          type: integer
+        activeWorkflows:
+          type: integer
+        recentSamples:
+          type: array
+          items:
+            $ref: "#/components/schemas/Sample"
+        recentAuditLogs:
+          type: array
+          items:
+            $ref: "#/components/schemas/AuditLog"
+      required:
+        - totalSamples
+        - activeSamples
+        - pendingTests
+        - completedTests
+        - lowStockItems
+        - activeWorkflows
+        - recentSamples
+        - recentAuditLogs

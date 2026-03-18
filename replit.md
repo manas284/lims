@@ -2,7 +2,7 @@
 
 ## Overview
 
-pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
+LIMS (Laboratory Information Management System) — a full-stack web application for managing lab samples, tests, inventory, workflows, storage, reporting, and compliance audit trails.
 
 ## Stack
 
@@ -15,82 +15,74 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **Validation**: Zod (`zod/v4`), `drizzle-zod`
 - **API codegen**: Orval (from OpenAPI spec)
 - **Build**: esbuild (CJS bundle)
+- **Frontend**: React + Vite, TailwindCSS v4, React Query, Recharts, Framer Motion
 
 ## Structure
 
 ```text
 artifacts-monorepo/
-├── artifacts/              # Deployable applications
-│   └── api-server/         # Express API server
-├── lib/                    # Shared libraries
+├── artifacts/
+│   ├── api-server/         # Express API server (all LIMS API routes)
+│   └── lims/               # React + Vite LIMS frontend
+├── lib/
 │   ├── api-spec/           # OpenAPI spec + Orval codegen config
 │   ├── api-client-react/   # Generated React Query hooks
 │   ├── api-zod/            # Generated Zod schemas from OpenAPI
 │   └── db/                 # Drizzle ORM schema + DB connection
-├── scripts/                # Utility scripts (single workspace package)
-│   └── src/                # Individual .ts scripts, run via `pnpm --filter @workspace/scripts run <script>`
-├── pnpm-workspace.yaml     # pnpm workspace (artifacts/*, lib/*, lib/integrations/*, scripts)
-├── tsconfig.base.json      # Shared TS options (composite, bundler resolution, es2022)
-├── tsconfig.json           # Root TS project references
-└── package.json            # Root package with hoisted devDeps
+├── scripts/                # Utility scripts
+├── pnpm-workspace.yaml
+├── tsconfig.base.json
+├── tsconfig.json
+└── package.json
 ```
+
+## LIMS Modules
+
+### Frontend Pages (`artifacts/lims/src/pages/`)
+- **Dashboard** — Stats overview, activity chart, recent audit logs, latest samples
+- **Samples** — Register, list, filter, and update lab samples with barcodes
+- **Tests** — Manage lab tests linked to samples, record results
+- **Inventory** — Track chemicals/kits/tools, low-stock alerts
+- **Workflows** — State machine workflow tracker (received → logged → testing → review → approved → completed)
+- **Storage** — Hierarchical storage management (freezer → rack → box → slot)
+- **Reports** — Generate and view reports (test results, audit, inventory, workflow)
+- **Audit Logs** — Compliance audit trail of all actions
+- **Users** — Manage lab users with roles (admin, technician, reviewer, customer)
+
+### Database Schema (`lib/db/src/schema/`)
+- `users.ts` — Users table (id, name, email, role)
+- `samples.ts` — Samples table (id, barcode, type, status, priority, locationId, createdById)
+- `tests.ts` — Tests table (id, sampleId, testName, result, status, performedById)
+- `inventory.ts` — Inventory table (id, name, category, quantity, unit, threshold, expiryDate, supplier, location)
+- `workflows.ts` — Workflows table (id, sampleId, workflowName, currentStage, status, assignedToId)
+- `storage.ts` — Storage locations table (id, name, type, parentId, temperature, capacity)
+- `reports.ts` — Reports table (id, sampleId, reportType, title, content, generatedById)
+- `audit-logs.ts` — Audit logs table (id, userId, action, entityType, entityId, oldValue, newValue)
+
+### API Routes (`artifacts/api-server/src/routes/`)
+- `health.ts` — Health check
+- `users.ts` — GET/POST /users, GET /users/:id
+- `samples.ts` — GET/POST /samples, GET/PATCH /samples/:id (auto-generates barcodes like SAMPLE-00001)
+- `tests.ts` — GET/POST /tests, GET/PATCH /tests/:id
+- `inventory.ts` — GET/POST /inventory, GET/PATCH /inventory/:id
+- `workflows.ts` — GET/POST /workflows, GET/PATCH /workflows/:id
+- `storage.ts` — GET/POST /storage, GET /storage/:id
+- `reports.ts` — GET/POST /reports, GET /reports/:id
+- `audit-logs.ts` — GET /audit-logs (with userId, action, limit filters)
+- `dashboard.ts` — GET /dashboard/stats
+
+### Shared Lib (`artifacts/api-server/src/lib/`)
+- `audit.ts` — logAudit() helper (called on all CUD operations), generateBarcode() for samples
 
 ## TypeScript & Composite Projects
 
-Every package extends `tsconfig.base.json` which sets `composite: true`. The root `tsconfig.json` lists all packages as project references. This means:
+Every package extends `tsconfig.base.json` which sets `composite: true`. The root `tsconfig.json` lists all packages as project references.
 
-- **Always typecheck from the root** — run `pnpm run typecheck` (which runs `tsc --build --emitDeclarationOnly`). This builds the full dependency graph so that cross-package imports resolve correctly. Running `tsc` inside a single package will fail if its dependencies haven't been built yet.
-- **`emitDeclarationOnly`** — we only emit `.d.ts` files during typecheck; actual JS bundling is handled by esbuild/tsx/vite...etc, not `tsc`.
-- **Project references** — when package A depends on package B, A's `tsconfig.json` must list B in its `references` array. `tsc --build` uses this to determine build order and skip up-to-date packages.
+- **Always typecheck from the root** — run `pnpm run typecheck`
+- Run codegen: `pnpm --filter @workspace/api-spec run codegen`
+- Push DB schema: `pnpm --filter @workspace/db run push`
 
-## Root Scripts
+## Deployment
 
-- `pnpm run build` — runs `typecheck` first, then recursively runs `build` in all packages that define it
-- `pnpm run typecheck` — runs `tsc --build --emitDeclarationOnly` using project references
-
-## Packages
-
-### `artifacts/api-server` (`@workspace/api-server`)
-
-Express 5 API server. Routes live in `src/routes/` and use `@workspace/api-zod` for request and response validation and `@workspace/db` for persistence.
-
-- Entry: `src/index.ts` — reads `PORT`, starts Express
-- App setup: `src/app.ts` — mounts CORS, JSON/urlencoded parsing, routes at `/api`
-- Routes: `src/routes/index.ts` mounts sub-routers; `src/routes/health.ts` exposes `GET /health` (full path: `/api/health`)
-- Depends on: `@workspace/db`, `@workspace/api-zod`
-- `pnpm --filter @workspace/api-server run dev` — run the dev server
-- `pnpm --filter @workspace/api-server run build` — production esbuild bundle (`dist/index.cjs`)
-- Build bundles an allowlist of deps (express, cors, pg, drizzle-orm, zod, etc.) and externalizes the rest
-
-### `lib/db` (`@workspace/db`)
-
-Database layer using Drizzle ORM with PostgreSQL. Exports a Drizzle client instance and schema models.
-
-- `src/index.ts` — creates a `Pool` + Drizzle instance, exports schema
-- `src/schema/index.ts` — barrel re-export of all models
-- `src/schema/<modelname>.ts` — table definitions with `drizzle-zod` insert schemas (no models definitions exist right now)
-- `drizzle.config.ts` — Drizzle Kit config (requires `DATABASE_URL`, automatically provided by Replit)
-- Exports: `.` (pool, db, schema), `./schema` (schema only)
-
-Production migrations are handled by Replit when publishing. In development, we just use `pnpm --filter @workspace/db run push`, and we fallback to `pnpm --filter @workspace/db run push-force`.
-
-### `lib/api-spec` (`@workspace/api-spec`)
-
-Owns the OpenAPI 3.1 spec (`openapi.yaml`) and the Orval config (`orval.config.ts`). Running codegen produces output into two sibling packages:
-
-1. `lib/api-client-react/src/generated/` — React Query hooks + fetch client
-2. `lib/api-zod/src/generated/` — Zod schemas
-
-Run codegen: `pnpm --filter @workspace/api-spec run codegen`
-
-### `lib/api-zod` (`@workspace/api-zod`)
-
-Generated Zod schemas from the OpenAPI spec (e.g. `HealthCheckResponse`). Used by `api-server` for response validation.
-
-### `lib/api-client-react` (`@workspace/api-client-react`)
-
-Generated React Query hooks and fetch client from the OpenAPI spec (e.g. `useHealthCheck`, `healthCheck`).
-
-### `scripts` (`@workspace/scripts`)
-
-Utility scripts package. Each script is a `.ts` file in `src/` with a corresponding npm script in `package.json`. Run scripts via `pnpm --filter @workspace/scripts run <script>`. Scripts can import any workspace package (e.g., `@workspace/db`) by adding it as a dependency in `scripts/package.json`.
+- Frontend (artifacts/lims) serves at `/` (static Vite build)
+- Backend (artifacts/api-server) serves at `/api`
